@@ -1,6 +1,9 @@
 package warehouseapp.warehouse.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import warehouseapp.warehouse.entity.Currency;
 import warehouseapp.warehouse.payload.ApiResponse;
@@ -8,6 +11,7 @@ import warehouseapp.warehouse.repository.CurrencyRepository;
 import warehouseapp.warehouse.service.CurrencyService;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/currency")
@@ -18,34 +22,42 @@ public class CurrencyController {
     CurrencyService currencyService;
 
     @PostMapping("/add")
-    public ApiResponse add(@RequestBody Currency currency) {
-        return currencyService.addCurrency(currency);
+    public HttpEntity<?> add(@RequestBody Currency currency) {
+        currencyService.addCurrency(currency);
+        return ResponseEntity.ok( new ApiResponse(" Saved!", true));
     }
 
     @GetMapping("/list")
-    public List<Currency> getAll() {
-        return currencyRepository.findAll();
+    public HttpEntity<ApiResponse> getAll() {
+        return ResponseEntity.ok(new ApiResponse("Succeed!",true,currencyRepository.findAll()));
     }
 
     @GetMapping("/{id}")
-    public ApiResponse getById(@PathVariable Integer id) {
-        return currencyService.getById(id);
+    public HttpEntity<ApiResponse> getById(@PathVariable Integer id) {
+        Optional byId = currencyRepository.findById(id);
+        if (!byId.isPresent()) return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse("Not Found!", false));
+        return ResponseEntity.ok(new ApiResponse("Found!", true, byId.get()));
     }
 
     @PutMapping("/edit/{id}")
-    public ApiResponse edit(@PathVariable Integer id, Currency currency) {
-        return currencyService.edit(id, currency);
+    public HttpEntity<ApiResponse> edit(@PathVariable Integer id, Currency currency) {
+        ApiResponse apiResponse = currencyService.edit(id, currency);
+        if (!apiResponse.isSuccess()) return  ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse("Not Found!", false));
+        return ResponseEntity.ok(new ApiResponse("Found!", true, apiResponse));
+
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse deleted(@PathVariable Integer id) {
-        if (!currencyRepository.existsById(id)) return new ApiResponse("Xatolik!", false);
+    public HttpEntity<?> deleted(@PathVariable Integer id) {
+        if (!currencyRepository.existsById(id)) return  ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse("Error!", false));
         currencyRepository.deleteById(id);
-        return new ApiResponse("Deleted !", true);
+        return ResponseEntity.ok(new ApiResponse("Deleted !", true));
     }
 
     @GetMapping("/changeStatus/{id}")
-    public ApiResponse change(@PathVariable Integer id) {
-        return currencyService.changeStatus(id);
+    public HttpEntity<ApiResponse> change(@PathVariable Integer id) {
+        ApiResponse apiResponse = currencyService.changeStatus(id);
+        if (!apiResponse.isSuccess()) return  ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse("Not Found!", false));
+        return ResponseEntity.ok(new ApiResponse("Found!", true, apiResponse));
     }
 }

@@ -30,15 +30,11 @@ public class ProductService {
         product.setName(productDTO.getName());
         product.setCode(UUID.randomUUID().toString());
 
-        //if bn tekshirish kk
         Optional<Category> categoryOptional = categoryRepository.findById(productDTO.getCategoryId());
         product.setCategory(categoryOptional.get());
 
         Optional<Measurement> optionalMeasurement = measurementRepository.findById(productDTO.getMeasurementId());
         product.setMeasurement(optionalMeasurement.get());
-
-//        List<Attachment> allById = attachmentRepository.findAllById(productDTO.getAttachmentIds());
-//        product.setAttachments(allById);
 
         productRepository.save(product);
         return new ApiResponse("Save", true);
@@ -48,9 +44,20 @@ public class ProductService {
         return new ApiResponse("Mana", true, productRepository.findAllByCategoryId(catId));
     }
 
-//    public ApiResponse searchByName(String name) {
-//        return new ApiResponse("Mana", true, productRepository.findByNameLike("%" + name + "%"));
-//    }
+    public ApiResponse edit(Integer id, ProductDTO productDTO) {
+        Optional<Product> optionalProduct = productRepository.findById(id);
+        if (optionalProduct.isPresent()) return new ApiResponse("Not Found",false);
+        Product product = optionalProduct.get();
+        product.setName(productDTO.getName());
+        product.setCode(UUID.randomUUID().toString());
 
+        Optional<Category> categoryOptional = categoryRepository.findById(productDTO.getCategoryId());
+        product.setCategory(categoryOptional.get());
 
+        Optional<Measurement> optionalMeasurement = measurementRepository.findById(productDTO.getMeasurementId());
+        product.setMeasurement(optionalMeasurement.get());
+
+        productRepository.save(product);
+        return new ApiResponse("Save", true);
+    }
 }

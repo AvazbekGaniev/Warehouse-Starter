@@ -1,6 +1,9 @@
 package warehouseapp.warehouse.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import warehouseapp.warehouse.entity.Warehouse;
 import warehouseapp.warehouse.payload.ApiResponse;
@@ -23,30 +26,35 @@ public class WarehouseController {
     }
 
     @GetMapping("/list")
-    public ApiResponse getAll() {
-        return new ApiResponse("List", true, warehouseRepository.findAll());
+    public HttpEntity<?> getAll() {
+        return ResponseEntity.ok(new ApiResponse("List", true, warehouseRepository.findAll()));
     }
 
     @GetMapping("/{id}")
-    public ApiResponse getOne(@PathVariable Integer id) {
-        return warehouseService.getOne(id);
+    public HttpEntity<ApiResponse> getOne(@PathVariable Integer id) {
+        ApiResponse apiResponse = warehouseService.getOne(id);
+        if (!apiResponse.isSuccess()) return  ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse("Not Found!", false));
+        return ResponseEntity.ok(new ApiResponse("Found!", true, apiResponse));
     }
 
     @PutMapping("/edit/{id}")
-    public ApiResponse edit(@PathVariable Integer id, @RequestBody Warehouse warehouse) {
-        return warehouseService.edit(id, warehouse);
+    public HttpEntity<ApiResponse> edit(@PathVariable Integer id, @RequestBody Warehouse warehouse) {
+        ApiResponse apiResponse = warehouseService.edit(id, warehouse);
+        if (!apiResponse.isSuccess()) return  ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse("Not Found!", false));
+        return ResponseEntity.ok(new ApiResponse("Found!", true, apiResponse));
     }
 
     @GetMapping("/changeStatus/{id}")
-    public ApiResponse changeStatus(@PathVariable Integer id) {
-        return warehouseService.changeStatus(id);
+    public HttpEntity<ApiResponse> changeStatus(@PathVariable Integer id) {
+        ApiResponse apiResponse = warehouseService.changeStatus(id);
+        if (!apiResponse.isSuccess()) return  ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse("Not Found!", false));
+        return ResponseEntity.ok(new ApiResponse("Found!", true, apiResponse));
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse delete(@PathVariable Integer id) {
-        boolean exists = warehouseRepository.existsById(id);
-        if (!exists) return new ApiResponse("NOT", false);
+    public HttpEntity<ApiResponse> delete(@PathVariable Integer id) {
+        if (!warehouseRepository.existsById(id)) return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse("Not Found!", false));
         warehouseRepository.deleteById(id);
-        return new ApiResponse("Delete!", true);
+        return ResponseEntity.ok(new ApiResponse("Delete!", true));
     }
 }

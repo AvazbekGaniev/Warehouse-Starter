@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 @Data
 @AllArgsConstructor
@@ -13,9 +14,12 @@ import javax.persistence.*;
 public abstract class AbsNameEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NotNull
     private Integer id;
+    @NotNull
     @Column(nullable = false)
     private String name;
+    @NotNull
     @Column(nullable = false)
     private boolean active = true;
 //    private String nameRu;

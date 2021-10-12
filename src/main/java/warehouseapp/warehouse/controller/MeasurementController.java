@@ -1,12 +1,16 @@
 package warehouseapp.warehouse.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import warehouseapp.warehouse.entity.Measurement;
 import warehouseapp.warehouse.payload.ApiResponse;
 import warehouseapp.warehouse.repository.MeasurementRepository;
 import warehouseapp.warehouse.service.MeasurementService;
 
+import javax.validation.Valid;
 import java.util.Optional;
 
 @RestController
@@ -20,33 +24,34 @@ public class MeasurementController {
     MeasurementService measurementService;
 
     @GetMapping("/list")
-    public ApiResponse getAll() {
-        return new ApiResponse("FOUND!", true, measurementRepository.findAll());
+    public HttpEntity<ApiResponse> getAll() {
+        return ResponseEntity.ok(new ApiResponse("FOUND!", true, measurementRepository.findAll()));
     }
 
     @GetMapping("/{id}")
-    public ApiResponse getOne(@PathVariable Integer id) {
+    public HttpEntity<ApiResponse> getOne(@PathVariable Integer id) {
         Optional<Measurement> optionalMeasurement = measurementRepository.findById(id);
-        return optionalMeasurement.map(measurement -> new ApiResponse("FOUND!", true, measurement)).orElseGet(() -> new ApiResponse("NOT FOUND!", false));
+        return optionalMeasurement.map(measurement -> ResponseEntity.ok(new ApiResponse("FOUND!", true, measurement))).orElseGet(() -> ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse("NOT FOUND!", false)));
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse delete(@PathVariable Integer id) {
-        if (measurementRepository.existsById(id)) {
+    public HttpEntity<ApiResponse> delete(@PathVariable Integer id) {
+        if (!measurementRepository.existsById(id)) return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse("NOT FOUND!", true));
             measurementRepository.deleteById(id);
-        }else {
-            return new ApiResponse("NOT FOUND!", true);
-        }
-        return new ApiResponse("DELETED!", true);
+        return ResponseEntity.ok(new ApiResponse("DELETED!", true));
     }
 
     @PostMapping("/add")
-    public ApiResponse add(@RequestBody Measurement measurement) {
-        return measurementService.addMeasurement(measurement);
+    public HttpEntity<ApiResponse> add(@Valid @RequestBody Measurement measurement) {
+        measurementService.addMeasurement(measurement);
+        return ResponseEntity.ok(new ApiResponse("Saved!", true));
     }
 
     @PutMapping("/{id}")
-    public ApiResponse edit(@PathVariable Integer id, @RequestBody Measurement measurement) {
-        return measurementService.edit(id, measurement);
+    public HttpEntity<ApiResponse> edit(@PathVariable Integer id, @RequestBody Measurement measurement) {
+        ApiResponse apiResponse = measurementService.edit(id, measurement);
+        if (!apiResponse.isSuccess()) return  ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse("Not Found!", false));
+        return ResponseEntity.ok(new ApiResponse("Found!", true, apiResponse));
+
     }
 }

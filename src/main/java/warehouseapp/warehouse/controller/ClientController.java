@@ -1,14 +1,16 @@
 package warehouseapp.warehouse.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import warehouseapp.warehouse.entity.Client;
 import warehouseapp.warehouse.payload.ApiResponse;
 import warehouseapp.warehouse.repository.ClientRepository;
 import warehouseapp.warehouse.service.ClientService;
 
-import java.util.List;
+import javax.validation.Valid;
 import java.util.Optional;
 
 @RestController
@@ -20,17 +22,16 @@ public class ClientController {
     @Autowired
     ClientService clientService;
 
-    @PreAuthorize(value = "hasAnyRole('ADMIN','USER')")
     @GetMapping("/list")
-    public List<Client> clients() {
-        return clientRepository.findAll();
+    public HttpEntity<?> clients() {
+        return ResponseEntity.ok(clientRepository.findAll());
     }
 
     @GetMapping("/{id}")
-    public ApiResponse getOne(@PathVariable Integer id) {
+    public HttpEntity<?>  getOne(@PathVariable Integer id) {
         Optional byId = clientRepository.findById(id);
-        if (!byId.isPresent()) return new ApiResponse("Not Found!", false);
-        return new ApiResponse("Found!", true, byId.get());
+        if (!byId.isPresent()) return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse("Not Found!", false));
+        return ResponseEntity.ok(new ApiResponse("Found!", true, byId.get()));
     }
 
     @PostMapping("/add")
@@ -39,16 +40,15 @@ public class ClientController {
     }
 
     @PutMapping("/edit/{id}")
-    public ApiResponse edit(@PathVariable Integer id, @RequestBody Client client) {
+    public ApiResponse edit(@PathVariable Integer id, @Valid @RequestBody Client client) {
         return clientService.edit(id, client);
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse delete(@PathVariable Integer id) {
-        Optional byId = clientRepository.findById(id);
-        if (!byId.isPresent()) return new ApiResponse("Not Found!", false);
-
+    public HttpEntity<?> delete(@PathVariable Integer id) {
+        Optional<Client> byId = clientRepository.findById(id);
+        if (!byId.isPresent()) return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse("Not Found!", false));
         clientRepository.deleteById(id);
-        return new ApiResponse("Deleted!", true);
+        return ResponseEntity.ok(new ApiResponse("Deleted!", true));
     }
 }
